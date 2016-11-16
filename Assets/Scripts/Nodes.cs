@@ -7,12 +7,13 @@ public class Nodes : MonoBehaviour
 	public static List<Nodes.Node> nodes;
 	public static List<Nodes.GridQuad> grids;
 	public static List<GameObject> iconPool;
+	public static float connectionDist = 2;
 
 	public enum SpecialNodes
 	{
 		None,
 		ManaFountain,
-		Blocked,//Rocks or some shit
+		Blocked,//Rocks or some such shit
 		End
 	}
 
@@ -27,12 +28,14 @@ public class Nodes : MonoBehaviour
 	{
 		//A node is a rounded position, that lines register with when they use it as a start/end point
 		//It doesn't exist by default, but once at least one line uses it.
+		public int uId = -1;
 		public Vector3 pos;
+		public Vector3 angles;
 		public List<Lines.Line> lines;
 		public SpecialNodes specialType = SpecialNodes.None;
 		public Manas.Mana mana;//The mana that is using this spot
-		public int uId = -1;
-		public Node[] connections;
+		public List<Node> connections;
+		public GridQuad grid;
 	}
 
 	public static void InitNodes()
@@ -40,6 +43,7 @@ public class Nodes : MonoBehaviour
 		nodes = new List<Node>();
 		grids = new List<GridQuad>();
 
+		//Find gridQuads
 		GameObject[] objsWithTag = GameObject.FindGameObjectsWithTag("GridQuad");
 		for (int i = 0; i < objsWithTag.Length; i++)
 		{
@@ -57,7 +61,8 @@ public class Nodes : MonoBehaviour
 			xa.emptyGO.transform.parent = grids[i].go.transform;
 			xa.emptyGO.transform.localPosition = Vector3.zero;
 			xa.emptyGO.transform.localEulerAngles = Vector3.zero;
-			xa.emptyGO.transform.localPosition = new Vector3(-grids[i].scale.x * 0.5f,0,-grids[i].scale.z * 0.5f);
+
+			xa.emptyGO.transform.localPosition = new Vector3(-grids[i].scale.x * 0.5f, 0, -grids[i].scale.z * 0.5f);
 
 			Debug.Log("Starting grid. " + grids[i].go.transform.position + ", " + xa.emptyGO.transform.localPosition);
 
@@ -68,83 +73,113 @@ public class Nodes : MonoBehaviour
 			{
 				for (float z = 0; z <= zScale; z += (1 / xa.gridScale))
 				{
-					CreateNode(xa.emptyGO.transform.position);
-					xa.emptyGO.transform.LocalAddZ((1/ xa.gridScale));
+					Vector3 spawnPos = xa.emptyGO.transform.position;
+					
+					xa.emptyGO.transform.LocalSetY(0.02f);
+					spawnPos = xa.emptyGO.transform.position;
+					CreateNode(spawnPos, grids[i].go.GetComponent<Info>().lineAngle, grids[i]);
+					
+					xa.emptyGO.transform.LocalSetY(0);
+					xa.emptyGO.transform.LocalAddZ((1 / xa.gridScale));
 				}
 				xa.emptyGO.transform.LocalSetZ(-grids[i].scale.z * 0.5f);
-				xa.emptyGO.transform.LocalAddX((1/ xa.gridScale));
+				xa.emptyGO.transform.LocalAddX((1 / xa.gridScale));
 			}
-
 		}
-	}
 
-	public static void InitNodeIconPool()
-	{
-		iconPool = new List<GameObject>();
-		for (int i = 0; i < 10000; i++)
+		//Connect all nodes within X dist of each other
+		for (int a = 0; a < nodes.Count; a++)
 		{
-			GameObject go = (GameObject)Instantiate(Defines.self.gridNodePrefab);
-			go.transform.position = new Vector3(999, 999, 999);
-			iconPool.Add(go);
+			//do a distance check with all other nodes
+			for (int b = 0; b < nodes.Count; b++)
+			{
+				if (nodes[a].uId != nodes[b].uId)
+				{
+					//do a distance check
+					if (Vector3.Distance(nodes[a].pos, nodes[b].pos) < connectionDist)
+					{
+						//Then connect them
+						//Debug.Log("Nodes[a].uid: " + nodes[a].uId + ", Nodes[b].uid: " + nodes[b].uId);
+						//Debug.DrawLine(nodes[a].pos, new Vector3(0,2,0), Color.magenta, 100);
+						//Debug.DrawLine(nodes[b].pos, new Vector3(0,2,0), Color.magenta, 100);
+						//Debug.Log("Nodes[a].connections: " + (nodes[a].connections != null));
+						//Debug.Log("Nodes[b].connections: " + (nodes[b].connections != null));
+						nodes[a].connections.Add(nodes[b]);
+						nodes[b].connections.Add(nodes[a]);
+					}
+				}
+			}
 		}
 	}
 
+	public static Node FindNearestNode(Vector3 pos)
+	{
+		float nearest = 9999;
+		Node result = null;
+		for (int i = 0; i < nodes.Count; i++)
+		{
+			float dist = Vector3.Distance(nodes[i].pos, pos) ;
+			if (dist < nearest)
+			{
+				nearest = dist;
+				result = nodes[i];
+			}
+		}
+		return result;
+	}
 
-	public static int CreateNode(Vector3 pos)//Creates a basic node where none was
+	public static void DisplayNodeDebug()
+	{
+		for (int i = 0; i < nodes.Count; i++)
+		{
+			//Debug.DrawLine(nodes[i].pos, new Vector3(0, 2, 0), Color.magenta);
+			//Show the connections of this node
+			//for (int a = 0; a < Nodes.nodes[i].connections.Count; a++)
+			//{
+			//Debug.DrawLine(Nodes.nodes[i].pos,Nodes.nodes[i].connections[a].pos,Color.blue);
+			//}
+		}
+	}
+
+	public static Node CreateNode(Vector3 pos, Vector3 angles, GridQuad grid)//Creates a basic node where none was
 	{
 		//Add node to list
-		Nodes.Node node = new Nodes.Node();
+		Node node = new Node();
 		node.pos = pos;
 		xa.uIds++;
 		node.uId = xa.uIds;
 		node.lines = new List<Lines.Line>();
+		node.connections = new List<Node>();
+		node.angles = angles;
+		node.grid = grid;
 
-		GameObject go = (GameObject)Instantiate(Defines.self.gridNodePrefab);
+		GameObject go = Instantiate(Defines.self.gridNodePrefab);
 		go.transform.position = pos;
 
+		//Debug.DrawLine(pos, new Vector3(0, 2, 0), Color.blue, 100);
 		nodes.Add(node);
-		return nodes.Count - 1;
+		Debug.Log("Nodes count: " + nodes.Count);
+		return node;
+	}
+	
+
+	public static void RegisterSpecialNode(Node node, SpecialNodes type)
+	{
+		node.specialType = type;
 	}
 
-	public static Node RegisterAtNode(Vector3 pos, int lineIndex)
+	public static bool CheckConnection(Node n1, Node n2)
 	{
-		int nodeIndex = GetIndexForNodePos(pos);
-		if (nodeIndex == -1)//Whoops, no node for the pos exists yet. Create it.
-		{
-			//Add node to list
-			nodeIndex = CreateNode(pos);
-		}
-		nodes[nodeIndex].lines.Add(Lines.lines[lineIndex]);
-		return nodes[nodeIndex];
-	}
-
-	public static void RegisterSpecialNode(Vector3 pos, SpecialNodes type)
-	{
-		int nodeIndex = GetIndexForNodePos(pos);
-		if (nodeIndex == -1)//Whoops, no node for the pos exists yet. Create it.
-		{
-			//Add node to list
-			nodeIndex = CreateNode(pos);
-		}
-		nodes[nodeIndex].specialType = type;
-	}
-
-	public static bool CheckConnection(Vector3 v1, Vector3 v2)
-	{ return CheckConnection(Nodes.GetIndexForNodePos(v1), v2); }
-
-	public static bool CheckConnection(int n1, Vector3 v2)
-	{
-		int n2 = Nodes.GetIndexForNodePos(v2);
-		if (n1 == -1 || n2 == -1) { return false; }
+		if (n1 == null || n2 == null) { return false; }
 
 		//Do they have a matching line uId?
-		for (int a = 0; a < nodes[n1].lines.Count; a++)
+		for (int a = 0; a < n1.lines.Count; a++)
 		{
-			for (int b = 0; b < nodes[n2].lines.Count; b++)
+			for (int b = 0; b < n2.lines.Count; b++)
 			{
-				if (nodes[n1].lines[a].rune == null)//Make sure this line isn't used in another rune
+				if (n1.lines[a].rune == null)//Make sure this line isn't used in another rune
 				{
-					if (nodes[n1].lines[a].uId == nodes[n2].lines[b].uId)
+					if (n1.lines[a].uId == n2.lines[b].uId)
 					{
 						return true;
 					}
@@ -154,67 +189,35 @@ public class Nodes : MonoBehaviour
 		return false;
 	}
 
-	public static Lines.Line GetConnection(Vector3 v1, Vector3 v2)//Returns the line connecting these 2 points
+	public static Lines.Line GetConnection(Node n1, Node n2)
 	{
-		int n1 = Nodes.GetIndexForNodePos(v1);
-		int n2 = Nodes.GetIndexForNodePos(v2);
-		if (n1 == -1 || n2 == -1) { return null; }
+		if (n1 == null || n2 == null) { return null; }
 
 		//Do they have a matching line uId?
-		for (int a = 0; a < nodes[n1].lines.Count; a++)
+		for (int a = 0; a < n1.lines.Count; a++)
 		{
-			for (int b = 0; b < nodes[n2].lines.Count; b++)
+			for (int b = 0; b < n2.lines.Count; b++)
 			{
-				if (nodes[n1].lines[a].uId == nodes[n2].lines[b].uId)
+				if (n1.lines[a].uId == n2.lines[b].uId)
 				{
-					return nodes[n1].lines[a];
+					return n1.lines[a];
 				}
 			}
 		}
 		return null;
 	}
 
-
-	public static void UpdateGridPool()
+	public static bool CheckValidNode(Node node)
 	{
-		/*
-		//Get the player's pos
-		Vector3 center = RoundPos(Player.playerPos);
-		center.y = 0.515f;
-
-		//subtract 5
-		Vector3 corner = new Vector3(center.x - (50 / gridScale), center.y, center.z - (50 / gridScale));
-
-		int i = 0;
-		for (int x = 0; x < 100; x++)
+		if(node.specialType == SpecialNodes.ManaFountain ||
+			node.specialType == SpecialNodes.Blocked)
 		{
-			for (int z = 0; z < 100; z++)
-			{
-				float x2 = x / gridScale;
-				float z2 = z / gridScale;
-				gridPool[i].transform.position = new Vector3(x2 + corner.x, center.y, z2 + corner.z);
-				i++;
-			}
+			return false;
 		}
-		*/
-	}
 
-	public static bool CheckValidDrawLinePos(Vector3 pos)
-	{
-		//Is this position a place where a draw line can happen?
-
-		int index = GetIndexForNodePos(pos);
-		if (index != -1)
-		{
-			if (nodes[index].specialType == SpecialNodes.ManaFountain ||
-			nodes[index].specialType == SpecialNodes.ManaFountain)
-			{
-				return false;
-			}
-		}
 		return true;
 	}
-
+	/*
 	public static bool CheckNodePos(Vector3 pos)
 	{
 		for (int i = 0; i < nodes.Count; i++)
@@ -237,6 +240,6 @@ public class Nodes : MonoBehaviour
 			}
 		}
 		return -1;
-	}
+	}*/
 
 }

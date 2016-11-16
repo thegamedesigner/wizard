@@ -14,7 +14,8 @@ public class ManaFountainScript : MonoBehaviour
 		timeSet = Time.timeSinceLevelLoad;
 
 		//register on my node
-		Nodes.RegisterSpecialNode(Lines.RoundPos(transform.position), Nodes.SpecialNodes.ManaFountain);
+		Nodes.Node node = Nodes.FindNearestNode(transform.position);
+		Nodes.RegisterSpecialNode(node, Nodes.SpecialNodes.ManaFountain);
 	}
 
 	void Update()

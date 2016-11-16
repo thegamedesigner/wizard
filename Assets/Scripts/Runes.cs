@@ -30,7 +30,6 @@ public class Runes : MonoBehaviour
 
 		public void HandleRuneAction()
 		{
-			int nodeIndex;
 			switch (type)
 			{
 				case RuneTypes.RuneOfHarvest:
@@ -39,6 +38,7 @@ public class Runes : MonoBehaviour
 						Debug.Log("Spawned! Time: " + Time.timeSinceLevelLoad + ", TimeSet: " + timeSet + ", delay: 5");
 						timeSet = Time.timeSinceLevelLoad;
 
+						/*
 						nodeIndex = Nodes.GetIndexForNodePos(positionsOfInterest[2]);
 						if (nodeIndex != -1)
 						{
@@ -46,12 +46,13 @@ public class Runes : MonoBehaviour
 							{
 								Manas.CreateMana(positionsOfInterest[2], 90, 3, manaType);
 							}
-						}
+						}*/
 
 					}
 					break;
 				case RuneTypes.RuneOfMomentum:
 					//Is there mana on me?
+					/*
 					nodeIndex = Nodes.GetIndexForNodePos(positionsOfInterest[0]);
 					if (nodeIndex != -1)//If this node exists (it probably does, it has lines on it)
 					{
@@ -67,7 +68,7 @@ public class Runes : MonoBehaviour
 						{
 							Nodes.nodes[nodeIndex].mana.momentum = 2;
 						}
-					}
+					}*/
 					break;
 			}
 		}
@@ -103,7 +104,7 @@ public class Runes : MonoBehaviour
 			if (Nodes.nodes[n].lines.Count >= 2)
 			{
 				//Alright, then look for runes that include double nodes:
-				LookForRuneOfMomentum(n);
+				//LookForRuneOfMomentum(Nodes.nodes[n]);
 			}
 
 			//Is it a Tri Node?
@@ -111,7 +112,7 @@ public class Runes : MonoBehaviour
 			{
 				//Alright, then look for runes that include trinodes:
 
-				LookForRuneOfHarvest(n);
+				//LookForRuneOfHarvest(Nodes.nodes[n]);
 			}
 
 			//Is it a Quad Node?
@@ -120,17 +121,17 @@ public class Runes : MonoBehaviour
 				//Alright, then look for runes that include quadnodes:
 
 				//Crowprint
-				LookForCrowprint(n);
+				//LookForCrowprint(Nodes.nodes[n]);
 
-				LookForGodsCompass(n);
+				//LookForGodsCompass(Nodes.nodes[n]);
 			}
 		}
 	}
-
-	public static void LookForRuneOfMomentum(int n)
+	/*
+	public static void LookForRuneOfMomentum(Nodes.Node node)
 	{
-		Vector3 np = Nodes.nodes[n].pos;
-		if (Nodes.CheckConnection(n, new Vector3(np.x - (1 / xa.gridScale), np.y, np.z + (1 / xa.gridScale))) &&
+		Vector3 np = node.pos;
+		if (Nodes.CheckConnection(node, new Vector3(np.x - (1 / xa.gridScale), np.y, np.z + (1 / xa.gridScale))) &&
 			Nodes.CheckConnection(n, new Vector3(np.x + (1 / xa.gridScale), np.y, np.z + (1 / xa.gridScale))) &&
 			Nodes.CheckConnection(new Vector3(np.x - (1 / xa.gridScale), np.y, np.z + (1 / xa.gridScale)), new Vector3(np.x + (1 / xa.gridScale), np.y, np.z + (1 / xa.gridScale))))
 		{
@@ -154,7 +155,7 @@ public class Runes : MonoBehaviour
 		}
 	}
 
-	public static void LookForRuneOfHarvest(int n)
+	public static void LookForRuneOfHarvest(Nodes.Node node)
 	{
 		Vector3 np = Nodes.nodes[n].pos;
 		if (Nodes.CheckConnection(n, new Vector3(np.x - (1 / xa.gridScale), np.y, np.z + (1 / xa.gridScale))) &&
@@ -187,7 +188,7 @@ public class Runes : MonoBehaviour
 		}
 	}
 
-	public static void LookForCrowprint(int n)
+	public static void LookForCrowprint(Nodes.Node node)
 	{
 		//Does one of the lines attach to exactly 2 X to the left?
 		Vector3 np = Nodes.nodes[n].pos;
@@ -215,7 +216,7 @@ public class Runes : MonoBehaviour
 		}
 	}
 
-	public static void LookForGodsCompass(int n)
+	public static void LookForGodsCompass(Nodes.Node node)
 	{
 		//Does one of the lines attach to exactly 2 X to the left?
 		Vector3 np = Nodes.nodes[n].pos;
@@ -264,7 +265,7 @@ public class Runes : MonoBehaviour
 			runes.Add(rune);
 
 		}
-	}
+	}*/
 
 	public static void UpdateRunes()
 	{
@@ -294,6 +295,7 @@ public class Runes : MonoBehaviour
 				break;
 			case RuneTypes.RuneOfHarvest:
 				//Requires that there is a mana fountain inside it
+				/*
 				int index = Nodes.GetIndexForNodePos(r.positionsOfInterest[0]);
 				if (index != -1 && Nodes.nodes[index].specialType == Nodes.SpecialNodes.ManaFountain)
 				{
@@ -302,7 +304,8 @@ public class Runes : MonoBehaviour
 				else
 				{
 					r.active = false;
-				}
+				}*/
+					r.active = false;
 				break;
 			case RuneTypes.RuneOfMomentum:
 				r.active = true;

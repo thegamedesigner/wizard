@@ -5,11 +5,11 @@ public class Gun : MonoBehaviour
 {
 	public Camera cam;
 	public LayerMask mask;
+	public LayerMask mouseVsNodesMask;
 
 	bool drawing = false;
 	int lineId = -1;
 	int lastLineId = -1;
-	Vector3 lastRoundedPos;
 	Vector3 startPos;
 
 	void Start()
@@ -27,25 +27,49 @@ public class Gun : MonoBehaviour
 
 	void CheckDrawLine()
 	{
+		if (Input.GetKey(KeyCode.V))
+		{
+			Ray ray = cam.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
+			RaycastHit hit;
+			if (Physics.Raycast(ray, out hit, 1000, mask))
+			{
+				Vector3 point = hit.point;
+
+				//Find a nearby node
+				for (int i = 0; i < Nodes.nodes.Count; i++)
+				{
+					if (Vector3.Distance(Nodes.nodes[i].pos, point) < 0.25f)
+					{
+						//Show the connections of this node
+						for (int a = 0; a < Nodes.nodes[i].connections.Count; a++)
+						{
+							Debug.DrawLine(Nodes.nodes[i].pos, Nodes.nodes[i].connections[a].pos, Color.blue);
+							Debug.DrawLine(Nodes.nodes[i].pos, new Vector3(0, 2, 0), Color.magenta, 1);
+						}
+						break;
+					}
+				}
+			}
+		}
+
 		if (Input.GetMouseButtonDown(0))
 		{
 			//Started drawing!
 			drawing = true;
 
-			//Add first point
+			//start drawing lines
 			Ray ray = cam.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
 			RaycastHit hit;
 			if (Physics.Raycast(ray, out hit, 1000, mask))
 			{
-				Vector3 point = Lines.RoundPos(hit.point);
+				Nodes.Node n = Nodes.FindNearestNode(hit.point);
 
 				//check this is a valid pos
-				if (Nodes.CheckValidDrawLinePos(point))
+				if (Nodes.CheckValidNode(n))
 				{
 					lineId = Lines.RegisterNewLine();
-					startPos = point;
-					lastRoundedPos = point;
-					Lines.AddPoint(point, lineId);
+					startPos = n.pos;
+					Lines.AddPoint(n, lineId);
 				}
 				else
 				{
@@ -64,12 +88,12 @@ public class Gun : MonoBehaviour
 				RaycastHit hit;
 				if (Physics.Raycast(ray, out hit, 1000, mask))
 				{
-					Vector3 point = Lines.RoundPos(hit.point);
+					Nodes.Node n = Nodes.FindNearestNode(hit.point);
+
 					//check this is a valid pos
-					if (Nodes.CheckValidDrawLinePos(point))
+					if (Nodes.CheckValidNode(n))
 					{
-						lastRoundedPos = point;
-						Lines.AddPoint(point, lineId);
+						Lines.AddPoint(n, lineId);
 						//Debug.DrawLine(startPos, point, Color.red, 100);
 						//Debug.DrawLine(ray.origin, hit.point, Color.blue, 100);
 						//Debug.DrawLine(startPos, hit.point, Color.blue, 100);
@@ -90,7 +114,7 @@ public class Gun : MonoBehaviour
 				RaycastHit hit;
 				if (Physics.Raycast(ray, out hit, 1000, mask))
 				{
-					Vector3 point = Lines.RoundPos(hit.point);
+					Vector3 point = hit.point;
 					Debug.DrawLine(startPos, point, Color.red);
 				}
 			}

@@ -58,19 +58,12 @@ public class Manas : MonoBehaviour
 
 		//Reserve the node that this mana has been created on, for this mana.
 		m.go.transform.SetAngY(m.dir);//Set direction
-		m.nodePos = Lines.RoundPos(m.go.transform.position);//Careful to not create a mana if the node space isn't free.
+		m.nodePos = m.go.transform.position;//Careful to not create a mana if the node space isn't free.
 		m.go.transform.Translate(-(1 / xa.gridScale), 0, 0);//Move backwards the correct amount
 
-		int nodeIndex = Nodes.GetIndexForNodePos(m.nodePos);
-		if (nodeIndex == -1)
-		{
-			//Then create this node
-			nodeIndex = Nodes.CreateNode(m.nodePos);
-		}
-		m.nodeIndex = nodeIndex;
-		//Then reserve this node
-		Nodes.nodes[nodeIndex].mana = m;
-		m.node = Nodes.nodes[nodeIndex];
+		Nodes.Node node = Nodes.FindNearestNode(m.nodePos);
+		node.mana = m;
+		m.node = node;
 
 		manas.Add(m);
 	}
@@ -103,6 +96,7 @@ public class Manas : MonoBehaviour
 
 					m.go.transform.SetAngY(m.dir);//Set direction
 
+					/*
 					//Am I about to switch to the next node?
 					//Am I on my node pos? Then check if the next one is free
 					Vector3 startPos = m.go.transform.position;
@@ -122,10 +116,6 @@ public class Manas : MonoBehaviour
 						m.go.transform.position = startPos;
 
 						int nextNodeIndex = Nodes.GetIndexForNodePos(nextNodePos);
-						if (nextNodeIndex == -1)
-						{
-							nextNodeIndex = Nodes.CreateNode(nextNodePos);
-						}
 						if (Nodes.nodes[nextNodeIndex].mana == null)
 						{
 							//Then switch to this node. Don't stop moving.
@@ -147,6 +137,7 @@ public class Manas : MonoBehaviour
 						m.momentum -= speed;
 						m.go.transform.Translate(speed, 0, 0);
 					}
+					*/
 				}
 			}
 		}

@@ -10,6 +10,9 @@ public class Main : MonoBehaviour
 		GameObject go = new GameObject();
 		go.name = "emptyGO";
 		xa.emptyGO = go;
+		go = new GameObject();
+		go.name = "emptyGO2";
+		xa.emptyGO2 = go;
 
 		Lines.InitLines();
 		Runes.InitRunes();
@@ -26,8 +29,9 @@ public class Main : MonoBehaviour
 	{
 		Lines.UpdateLines();
 		Manas.UpdateMana();
-		Nodes.UpdateGridPool();
 		Runes.UpdateRunes();
+
+		Nodes.DisplayNodeDebug();
 
 
 		if (Input.GetKeyDown(KeyCode.T))

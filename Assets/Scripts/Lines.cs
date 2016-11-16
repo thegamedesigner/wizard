@@ -17,7 +17,6 @@ public class Lines : MonoBehaviour
 	public class Point
 	{
 		public Vector3 pos;
-		public Vector3 relWholePos;
 		public GameObject linePrefab;
 		public Nodes.Node node;
 	}
@@ -31,7 +30,7 @@ public class Lines : MonoBehaviour
 		lines.Add(line);
 		return line.uId;
 	}
-
+	/*
 	public static Vector3 RoundPos(Vector3 pos)
 	{
 		//Round to grid
@@ -43,57 +42,49 @@ public class Lines : MonoBehaviour
 
 		return pos;
 	}
-
-	public static Vector3 AddPoint(Vector3 pos, int uId)
+	*/
+	public static Vector3 AddPoint(Nodes.Node n1, int uId)
 	{
 		int i = GetLineForId(uId);
 
-		//Round to grid
-		pos = RoundPos(pos);
-
 		Point point = new Point();
-		point.pos = pos;
+		point.pos = n1.pos;
 
-		//now enter relWholePos
-		if (lines[i].points.Count == 0)
-		{
-			//This is the first point, so it's 0,0,0
-			point.relWholePos = new Vector3(0, 0, 0);
-		}
-		else
-		{
-			point.relWholePos = (pos - lines[i].points[0].pos) * 10;
-		}
-
-
-		Debug.Log("RelPos: " + point.relWholePos + ", Point: " + pos);
-		if (lines[i].points.Count > 0)
-		{
-			Vector3 lastPoint = lines[i].points[lines[i].points.Count - 1].pos;
-			point.linePrefab = CreateLinePrefab(lastPoint, point.pos, Defines.self.lineColor);
-
-			//Is the last point on this line (probably, now that lines have just 2 points)
-			point.node = Nodes.RegisterAtNode(pos, i);
-		}
-		else
+		if (lines[i].points.Count == 0)//Is the first point in the line
 		{
 			//This is the first point, so register it with the node
-			point.node = Nodes.RegisterAtNode(pos, i);
+
+			n1.lines.Add(lines[i]);//Add this line to the node's list of lines
+			point.node = n1;//Add this node to the point's pointer to the node it's on
+		}
+		else
+		{
+			n1.lines.Add(lines[i]);//Add this line to the node's list of lines
+			point.node = n1;//Add this node to the point's pointer to the node it's on
+
+			//Is the second point in the line
+			Nodes.Node lastNode = lines[i].points[lines[i].points.Count - 1].node;
+			
+			point.linePrefab = CreateLinePrefab(lastNode, n1, Defines.self.lineColor);
+
+			//Is the last point on this line (probably, now that lines have just 2 points)
 		}
 
 		lines[i].points.Add(point);
 
-		return pos;
+		return n1.pos;
 	}
 
-	public static GameObject CreateLinePrefab(Vector3 vec1, Vector3 vec2, Color c1)
+	public static GameObject CreateLinePrefab(Nodes.Node n1, Nodes.Node n2, Color c1)
 	{
 		GameObject go = (GameObject)Instantiate(Defines.self.linePrefab, Vector3.zero, new Quaternion(0, 0, 0, 0));
-		go.transform.position = vec1;
-		go.transform.LookAt(vec2);
-		float dist = Vector3.Distance(vec1, vec2);
+		go.transform.position = n1.pos;
+		go.transform.LookAt(n2.pos);
+		float dist = Vector3.Distance(n1.pos, n2.pos);
 		go.transform.Translate(0, 0, dist * 0.5f);
 		go.transform.localScale = new Vector3(1, 1, dist);
+		go.transform.localEulerAngles += n1.angles;
+		//go.transform.localEulerAngles = new Vector3(go.transform.localEulerAngles.x,go.transform.localEulerAngles.y,n1.angles.z);
 
 		//Assuming it's not a special kind of line, make it the "not yet a rune" color
 		SetRendererColor(go.GetComponentInChildren<MeshRenderer>(), Defines.self.lineColor);
@@ -238,29 +229,6 @@ public class Lines : MonoBehaviour
 				break;
 			}
 		}
-
-		//Clear out dead nodes
-		for (int a = 0; a < 100; a++)
-		{
-			bool foundOne = false;
-			for (int i = 0; i < Nodes.nodes.Count; i++)
-			{
-				if (Nodes.nodes[i].lines.Count == 0 &&
-					Nodes.nodes[i].specialType == Nodes.SpecialNodes.None &&
-					Nodes.nodes[i].mana == null)
-				{
-					//then this is an empty node
-					Nodes.nodes.RemoveAt(i);
-					foundOne = true;
-					break;
-				}
-			}
-			if (!foundOne)
-			{
-				break;
-			}
-		}
-
 	}
 
 	public static void InitLines()
@@ -304,8 +272,14 @@ public class Lines : MonoBehaviour
 			}
 			s += "\n";
 		}
-
-
+		
+		s += "\n\nGrids:\n";
+		for (int i = 0; i < Nodes.grids.Count; i++)
+		{
+			s += "Grid: " + Nodes.grids[i].uId + ", Pos: " + Nodes.grids[i].go.transform.position;
+			s += "\n";
+		}
+		/*
 		s += "\n\nNodes:\n";
 		for (int i = 0; i < Nodes.nodes.Count; i++)
 		{
@@ -322,14 +296,7 @@ public class Lines : MonoBehaviour
 			}
 			s += "\n";
 		}
-
-		s += "\n\nGrids:\n";
-		for (int i = 0; i < Nodes.grids.Count; i++)
-		{
-			s += "Grid: " + Nodes.grids[i].uId + ", Pos: " + Nodes.grids[i].go.transform.position;
-			s += "\n";
-		}
-
+		*/
 
 
 		Defines.self.debugText.text = s;
