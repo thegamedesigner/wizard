@@ -130,10 +130,11 @@ public class Runes : MonoBehaviour
 
 	public static void LookForCrowprint(Nodes.Node node)
 	{
+		Debug.Log("Looking for Crowprint, Node uId: " + node.uId);
 		List<Nodes.Connection> connections = new List<Nodes.Connection>();
-
-		connections.Add(Nodes.Con(-2, 0, 0, 0, 0, 0));
+		
 		connections.Add(Nodes.Con(0, 0, 2, 0, 0, 0));
+		connections.Add(Nodes.Con(-2, 0, 0, 0, 0, 0));
 		connections.Add(Nodes.Con(2, 0, 1, 0, 0, 0));
 		connections.Add(Nodes.Con(2, 0, -2, 0, 0, 0));
 		connections.Add(Nodes.Con(-1, 0, -1, 0, 0, -2));
