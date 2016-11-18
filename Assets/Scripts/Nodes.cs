@@ -17,6 +17,30 @@ public class Nodes : MonoBehaviour
 		End
 	}
 
+	public class Connection
+	{
+		public int x;//The relPos from the main node
+		public int y;
+		public int z;
+
+		public int x2;//The relPos from the main node, for the second node
+		public int y2;
+		public int z2;
+
+		public Node n1;
+		public Node n2;
+
+		public Lines.Line line;//The line that connects these 2 nodes
+	}
+
+	public class RelCon
+	{
+		public int x;
+		public int y;
+		public int z;
+		public Node node;
+	}
+
 	public class GridQuad
 	{
 		public int uId = -1;
@@ -31,11 +55,13 @@ public class Nodes : MonoBehaviour
 		public int uId = -1;
 		public Vector3 pos;
 		public Vector3 angles;
+		public Runes.Rune rune;
 		public List<Lines.Line> lines;
 		public SpecialNodes specialType = SpecialNodes.None;
 		public Manas.Mana mana;//The mana that is using this spot
 		public List<Node> connections;
 		public GridQuad grid;
+		public List<RelCon> relCons = new List<RelCon>();//
 	}
 
 	public static void InitNodes()
@@ -74,11 +100,11 @@ public class Nodes : MonoBehaviour
 				for (float z = 0; z <= zScale; z += (1 / xa.gridScale))
 				{
 					Vector3 spawnPos = xa.emptyGO.transform.position;
-					
+
 					xa.emptyGO.transform.LocalSetY(0.02f);
 					spawnPos = xa.emptyGO.transform.position;
 					CreateNode(spawnPos, grids[i].go.GetComponent<Info>().lineAngle, grids[i]);
-					
+
 					xa.emptyGO.transform.LocalSetY(0);
 					xa.emptyGO.transform.LocalAddZ((1 / xa.gridScale));
 				}
@@ -99,17 +125,302 @@ public class Nodes : MonoBehaviour
 					if (Vector3.Distance(nodes[a].pos, nodes[b].pos) < connectionDist)
 					{
 						//Then connect them
-						//Debug.Log("Nodes[a].uid: " + nodes[a].uId + ", Nodes[b].uid: " + nodes[b].uId);
-						//Debug.DrawLine(nodes[a].pos, new Vector3(0,2,0), Color.magenta, 100);
-						//Debug.DrawLine(nodes[b].pos, new Vector3(0,2,0), Color.magenta, 100);
-						//Debug.Log("Nodes[a].connections: " + (nodes[a].connections != null));
-						//Debug.Log("Nodes[b].connections: " + (nodes[b].connections != null));
 						nodes[a].connections.Add(nodes[b]);
 						nodes[b].connections.Add(nodes[a]);
 					}
 				}
 			}
 		}
+
+		//Fill relCon grid
+		for (int a = 0; a < nodes.Count; a++)
+		{
+			for (int b = 0; b < nodes[a].connections.Count; b++)
+			{
+				//Loop through all of this node's connections, and store their relCon dist
+				Vector3 pos = nodes[a].connections[b].pos;
+				Vector3 relPos = pos - nodes[a].pos;
+				//Debug.Log("NodePos: " + nodes[a].pos + ", NodeB: " + nodes[a].connections[b].pos + ", RelPos: " + relPos);
+
+				RelCon relCon = new RelCon();
+				relCon.x = Mathf.RoundToInt(relPos.x * 2);//2 is the gridScale inverted. So 0.5f==2
+				relCon.y = Mathf.RoundToInt(relPos.y * 2);//So I can store & check the relPos as ints, not floats
+				relCon.z = Mathf.RoundToInt(relPos.z * 2);
+				relCon.node = nodes[a].connections[b];
+				nodes[a].relCons.Add(relCon);
+				//	nodes[a].relCon
+			}
+		}
+	}
+
+	public static Connection Con(int x, int y, int z, int x2, int y2, int z2)
+	{
+		Connection c = new Connection();
+		c.x = x;
+		c.y = y;
+		c.z = z;
+		c.x2 = x2;
+		c.y2 = y2;
+		c.z2 = z2;
+		return c;
+	}
+
+	public static List<Connection> CheckRuneMulti(List<Connection> connections, Node node)
+	{
+		List<Connection> result = null;
+
+		int[] resetX = new int[connections.Count];
+		int[] resetY = new int[connections.Count];
+		int[] resetZ = new int[connections.Count];
+		int[] resetX2 = new int[connections.Count];
+		int[] resetY2 = new int[connections.Count];
+		int[] resetZ2 = new int[connections.Count];
+
+		for (int i = 0; i < connections.Count; i++)
+		{
+			resetX[i] = connections[i].x;
+			resetY[i] = connections[i].y;
+			resetZ[i] = connections[i].z;
+			resetX2[i] = connections[i].x2;
+			resetY2[i] = connections[i].y2;
+			resetZ2[i] = connections[i].z2;
+		}
+
+		//A1
+		result = CheckRune(connections, node);//A1
+		
+		//A2
+		if (result == null)
+		{
+			for (int i = 0; i < connections.Count; i++){connections[i].x = resetX[i];connections[i].y = resetY[i];connections[i].z = resetZ[i];connections[i].x2 = resetX2[i];connections[i].y2 = resetY2[i];connections[i].z2 = resetZ2[i];}
+
+			for (int i = 0; i < connections.Count; i++)
+			{
+				connections[i].x = connections[i].z;
+				connections[i].y = connections[i].y;
+				connections[i].z = -connections[i].x;
+
+				connections[i].x2 = connections[i].z2;
+				connections[i].y2 = connections[i].y2;
+				connections[i].z2 = -connections[i].x2;
+			}
+			result = CheckRune(connections, node);
+		}
+		
+		//A3
+		if (result == null)
+		{
+			for (int i = 0; i < connections.Count; i++){connections[i].x = resetX[i];connections[i].y = resetY[i];connections[i].z = resetZ[i];connections[i].x2 = resetX2[i];connections[i].y2 = resetY2[i];connections[i].z2 = resetZ2[i];}
+
+			for (int i = 0; i < connections.Count; i++)
+			{
+				connections[i].x = -connections[i].x;
+				connections[i].y = connections[i].y;
+				connections[i].z = -connections[i].z;
+
+				connections[i].x2 = -connections[i].x2;
+				connections[i].y2 = connections[i].y2;
+				connections[i].z2 = -connections[i].z2;
+			}
+			result = CheckRune(connections, node);
+		}
+		
+		//A4
+		if (result == null)
+		{
+			for (int i = 0; i < connections.Count; i++){connections[i].x = resetX[i];connections[i].y = resetY[i];connections[i].z = resetZ[i];connections[i].x2 = resetX2[i];connections[i].y2 = resetY2[i];connections[i].z2 = resetZ2[i];}
+
+			for (int i = 0; i < connections.Count; i++)
+			{
+				connections[i].x = -connections[i].z;
+				connections[i].y = connections[i].y;
+				connections[i].z = connections[i].x;
+
+				connections[i].x2 = -connections[i].z2;
+				connections[i].y2 = connections[i].y2;
+				connections[i].z2 = connections[i].x2;
+			}
+			result = CheckRune(connections, node);
+		}
+		
+		//B1
+		if (result == null)
+		{
+			for (int i = 0; i < connections.Count; i++){connections[i].x = resetX[i];connections[i].y = resetY[i];connections[i].z = resetZ[i];connections[i].x2 = resetX2[i];connections[i].y2 = resetY2[i];connections[i].z2 = resetZ2[i];}
+
+			for (int i = 0; i < connections.Count; i++)
+			{
+				connections[i].x = -connections[i].x;
+				connections[i].y = connections[i].y;
+				connections[i].z = connections[i].z;
+
+				connections[i].x2 = -connections[i].x2;
+				connections[i].y2 = connections[i].y2;
+				connections[i].z2 = connections[i].z2;
+			}
+			result = CheckRune(connections, node);
+		}
+		
+		//B2
+		if (result == null)
+		{
+			for (int i = 0; i < connections.Count; i++){connections[i].x = resetX[i];connections[i].y = resetY[i];connections[i].z = resetZ[i];connections[i].x2 = resetX2[i];connections[i].y2 = resetY2[i];connections[i].z2 = resetZ2[i];}
+
+			for (int i = 0; i < connections.Count; i++)
+			{
+				connections[i].x = connections[i].z;
+				connections[i].y = connections[i].y;
+				connections[i].z = connections[i].x;
+
+				connections[i].x2 = connections[i].z2;
+				connections[i].y2 = connections[i].y2;
+				connections[i].z2 = connections[i].x2;
+			}
+			result = CheckRune(connections, node);
+		}
+		
+		//B3
+		if (result == null)
+		{
+			for (int i = 0; i < connections.Count; i++){connections[i].x = resetX[i];connections[i].y = resetY[i];connections[i].z = resetZ[i];connections[i].x2 = resetX2[i];connections[i].y2 = resetY2[i];connections[i].z2 = resetZ2[i];}
+
+			for (int i = 0; i < connections.Count; i++)
+			{
+				connections[i].x = connections[i].x;
+				connections[i].y = connections[i].y;
+				connections[i].z = -connections[i].z;
+
+				connections[i].x2 = connections[i].x2;
+				connections[i].y2 = connections[i].y2;
+				connections[i].z2 = -connections[i].z2;
+			}
+			result = CheckRune(connections, node);
+		}
+		
+		//B4
+		if (result == null)
+		{
+			for (int i = 0; i < connections.Count; i++){connections[i].x = resetX[i];connections[i].y = resetY[i];connections[i].z = resetZ[i];connections[i].x2 = resetX2[i];connections[i].y2 = resetY2[i];connections[i].z2 = resetZ2[i];}
+
+			for (int i = 0; i < connections.Count; i++)
+			{
+				connections[i].x = -connections[i].z;
+				connections[i].y = connections[i].y;
+				connections[i].z = -connections[i].x;
+
+				connections[i].x2 = -connections[i].z2;
+				connections[i].y2 = connections[i].y2;
+				connections[i].z2 = -connections[i].x2;
+			}
+			result = CheckRune(connections, node);
+		}
+		
+
+
+		return result;
+	}
+
+	public static List<Connection> CheckRune(List<Connection> connections, Node node)
+	{
+		List<Connection> result = new List<Connection>();
+
+		//Check that all connections on list are matched to RelCons that this node has.
+		//(Can't have a node that larger then it's center node's connections)
+		for (int a = 0; a < connections.Count; a++)
+		{
+			bool found = false;
+			//Loop through all of this node's connections
+			for (int b = 0; b < node.relCons.Count; b++)
+			{
+				if (connections[a].x == node.relCons[b].x &&
+					connections[a].y == node.relCons[b].y &&
+					connections[a].z == node.relCons[b].z)
+				{
+					found = true;
+					Connection c = new Connection();
+					c.x = connections[a].x;
+					c.y = connections[a].y;
+					c.z = connections[a].z;
+					c.x2 = connections[a].x2;
+					c.y2 = connections[a].y2;
+					c.z2 = connections[a].z2;
+
+					result.Add(c);//add it to the list
+					break;//Stop looking, we've found this one
+						  //Debug.DrawLine(Nodes.nodes[i].pos, Nodes.nodes[i].relCons[a].node.pos, Color.blue);
+				}
+			}
+			if (!found)
+			{
+				//Failed. Return nothing.
+				return null;
+			}
+		}
+
+		//Now make sure that all of these connections are connected to the ones that they say they should be
+		//Just as relCons for now, later as lines as well
+
+		//Find the nodes for the result list
+		for (int a = 0; a < result.Count; a++)
+		{
+			//Find the first connection
+			for (int b = 0; b < node.relCons.Count; b++)
+			{
+				if (result[a].x == 0 &&
+					result[a].y == 0 &&
+					result[a].z == 0)
+				{
+					result[a].n1 = node;
+				}
+				else if (result[a].x == node.relCons[b].x &&
+					result[a].y == node.relCons[b].y &&
+					result[a].z == node.relCons[b].z)
+				{
+					result[a].n1 = node.relCons[b].node;
+				}
+
+				if (result[a].x2 == 0 &&
+					result[a].y2 == 0 &&
+					result[a].z2 == 0)
+				{
+					result[a].n2 = node;
+				}
+				else if (result[a].x2 == node.relCons[b].x &&
+					result[a].y2 == node.relCons[b].y &&
+					result[a].z2 == node.relCons[b].z)
+				{
+					result[a].n2 = node.relCons[b].node;
+				}
+			}
+		}
+
+		//Ok, now check all of these connections have lines, and have nodes/all info needed.
+
+		//Find the nodes for the result list
+		for (int a = 0; a < result.Count; a++)
+		{
+			//If for whatever reason, any of the results don't have a node, then fail.
+			if (result[a].n1 == null || result[a].n2 == null) { return null; }
+
+			//Check that this connection exists as a line
+			for (int i = 0; i < result[a].n1.lines.Count; i++)
+			{
+				for (int b = 0; b < result[a].n1.lines[i].points.Count; b++)
+				{
+					//Does n1 have a line that connects to n2?
+					if (result[a].n1.lines[i].points[b].node.uId == result[a].n2.uId)
+					{
+						//If yes, then let's store this line
+						result[a].line = result[a].n1.lines[i];
+					}
+				}
+			}
+			if (result[a].line == null) { return null; }//Couldn't find a line that connects these 2 nodes
+		}
+
+
+
+		return result;
 	}
 
 	public static Node FindNearestNode(Vector3 pos)
@@ -118,7 +429,7 @@ public class Nodes : MonoBehaviour
 		Node result = null;
 		for (int i = 0; i < nodes.Count; i++)
 		{
-			float dist = Vector3.Distance(nodes[i].pos, pos) ;
+			float dist = Vector3.Distance(nodes[i].pos, pos);
 			if (dist < nearest)
 			{
 				nearest = dist;
@@ -158,10 +469,10 @@ public class Nodes : MonoBehaviour
 
 		//Debug.DrawLine(pos, new Vector3(0, 2, 0), Color.blue, 100);
 		nodes.Add(node);
-		Debug.Log("Nodes count: " + nodes.Count);
+		//Debug.Log("Nodes count: " + nodes.Count);
 		return node;
 	}
-	
+
 
 	public static void RegisterSpecialNode(Node node, SpecialNodes type)
 	{
@@ -209,7 +520,7 @@ public class Nodes : MonoBehaviour
 
 	public static bool CheckValidNode(Node node)
 	{
-		if(node.specialType == SpecialNodes.ManaFountain ||
+		if (node.specialType == SpecialNodes.ManaFountain ||
 			node.specialType == SpecialNodes.Blocked)
 		{
 			return false;

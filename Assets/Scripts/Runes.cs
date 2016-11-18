@@ -116,17 +116,83 @@ public class Runes : MonoBehaviour
 			}
 
 			//Is it a Quad Node?
-			if (Nodes.nodes[n].lines.Count >= 4)
+			if (Nodes.nodes[n].lines.Count >= 4 && Nodes.nodes[n].rune == null)
 			{
 				//Alright, then look for runes that include quadnodes:
 
 				//Crowprint
-				//LookForCrowprint(Nodes.nodes[n]);
+				LookForCrowprint(Nodes.nodes[n]);
 
 				//LookForGodsCompass(Nodes.nodes[n]);
 			}
 		}
 	}
+
+	public static void LookForCrowprint(Nodes.Node node)
+	{
+		List<Nodes.Connection> connections = new List<Nodes.Connection>();
+
+		connections.Add(Nodes.Con(-2, 0, 0, 0, 0, 0));
+		connections.Add(Nodes.Con(0, 0, 2, 0, 0, 0));
+		connections.Add(Nodes.Con(2, 0, 1, 0, 0, 0));
+		connections.Add(Nodes.Con(2, 0, -2, 0, 0, 0));
+		connections.Add(Nodes.Con(-1, 0, -1, 0, 0, -2));
+		connections.Add(Nodes.Con(0, 0, -2, -1, 0, -1));
+
+		List<Nodes.Connection> result = Nodes.CheckRuneMulti(connections, node);
+
+		if (result != null && result.Count > 0)
+		{
+			Debug.Log("FOUND RUNE: Crowprint");
+
+			Rune rune = new Rune();
+			rune.lines = new List<Lines.Line>();
+			rune.type = RuneTypes.RuneCrowprint;
+
+			for(int i = 0;i < result.Count;i++)
+			{
+				rune.lines.Add(result[i].line);
+			}
+
+			rune.InitRune();
+			CheckRuneRequirements(rune);
+			runes.Add(rune);
+			node.rune = rune;
+		}
+		else
+		{
+			//This is not a crowprint
+		}
+
+
+
+		//Does one of the lines attach to exactly 2 X to the left?
+		/*
+		if (Nodes.CheckConnection(node, new Vector3(np.x - (2 / xa.gridScale), np.y, np.z)) &&
+			Nodes.CheckConnection(n, new Vector3(np.x + (2 / xa.gridScale), np.y, np.z)) &&
+			Nodes.CheckConnection(n, new Vector3(np.x, np.y, np.z + (2 / xa.gridScale))) &&
+			Nodes.CheckConnection(n, new Vector3(np.x + (2 / xa.gridScale), np.y, np.z - (2 / xa.gridScale))) &&
+			Nodes.CheckConnection(new Vector3(np.x - (1 / xa.gridScale), np.y, np.z - (1 / xa.gridScale)), new Vector3(np.x, np.y, np.z - (2 / xa.gridScale)))
+			)
+		{
+			//Found one
+			Debug.Log("FOUND RUNE: Crowprint");
+
+			Rune rune = new Rune();
+			rune.lines = new List<Lines.Line>();
+			rune.type = RuneTypes.RuneCrowprint;
+			rune.lines.Add(Nodes.GetConnection(np, new Vector3(np.x - (2 / xa.gridScale), np.y, np.z)));
+			rune.lines.Add(Nodes.GetConnection(np, new Vector3(np.x + (2 / xa.gridScale), np.y, np.z)));
+			rune.lines.Add(Nodes.GetConnection(np, new Vector3(np.x, np.y, np.z + (2 / xa.gridScale))));
+			rune.lines.Add(Nodes.GetConnection(np, new Vector3(np.x + (2 / xa.gridScale), np.y, np.z - (2 / xa.gridScale))));
+			rune.lines.Add(Nodes.GetConnection(new Vector3(np.x - (1 / xa.gridScale), np.y, np.z - (1 / xa.gridScale)), new Vector3(np.x, np.y, np.z - (2 / xa.gridScale))));
+			CheckRuneRequirements(rune);
+			runes.Add(rune);
+
+		}*/
+	}
+
+
 	/*
 	public static void LookForRuneOfMomentum(Nodes.Node node)
 	{
@@ -182,34 +248,6 @@ public class Runes : MonoBehaviour
 			rune.positionsOfInterest[2] = new Vector3(np.x, np.y, np.z - (1 / xa.gridScale));//Mana fountain pos
 			rune.delay = 2;
 			rune.InitRune();
-			CheckRuneRequirements(rune);
-			runes.Add(rune);
-
-		}
-	}
-
-	public static void LookForCrowprint(Nodes.Node node)
-	{
-		//Does one of the lines attach to exactly 2 X to the left?
-		Vector3 np = Nodes.nodes[n].pos;
-		if (Nodes.CheckConnection(n, new Vector3(np.x - (2 / xa.gridScale), np.y, np.z)) &&
-			Nodes.CheckConnection(n, new Vector3(np.x + (2 / xa.gridScale), np.y, np.z)) &&
-			Nodes.CheckConnection(n, new Vector3(np.x, np.y, np.z + (2 / xa.gridScale))) &&
-			Nodes.CheckConnection(n, new Vector3(np.x + (2 / xa.gridScale), np.y, np.z - (2 / xa.gridScale))) &&
-			Nodes.CheckConnection(new Vector3(np.x - (1 / xa.gridScale), np.y, np.z - (1 / xa.gridScale)), new Vector3(np.x, np.y, np.z - (2 / xa.gridScale)))
-			)
-		{
-			//Found one
-			Debug.Log("FOUND RUNE: Crowprint");
-
-			Rune rune = new Rune();
-			rune.lines = new List<Lines.Line>();
-			rune.type = RuneTypes.RuneCrowprint;
-			rune.lines.Add(Nodes.GetConnection(np, new Vector3(np.x - (2 / xa.gridScale), np.y, np.z)));
-			rune.lines.Add(Nodes.GetConnection(np, new Vector3(np.x + (2 / xa.gridScale), np.y, np.z)));
-			rune.lines.Add(Nodes.GetConnection(np, new Vector3(np.x, np.y, np.z + (2 / xa.gridScale))));
-			rune.lines.Add(Nodes.GetConnection(np, new Vector3(np.x + (2 / xa.gridScale), np.y, np.z - (2 / xa.gridScale))));
-			rune.lines.Add(Nodes.GetConnection(new Vector3(np.x - (1 / xa.gridScale), np.y, np.z - (1 / xa.gridScale)), new Vector3(np.x, np.y, np.z - (2 / xa.gridScale))));
 			CheckRuneRequirements(rune);
 			runes.Add(rune);
 
@@ -305,7 +343,7 @@ public class Runes : MonoBehaviour
 				{
 					r.active = false;
 				}*/
-					r.active = false;
+				r.active = false;
 				break;
 			case RuneTypes.RuneOfMomentum:
 				r.active = true;
