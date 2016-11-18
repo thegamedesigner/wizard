@@ -147,10 +147,10 @@ public class Lines : MonoBehaviour
 
 	public static void DeleteLine(int uId)
 	{
-		int i = GetLineForId(uId);
+		int index = GetLineForId(uId);
 
 		//break any runes that use this line
-		Runes.Rune rune = lines[i].rune;
+		Runes.Rune rune = lines[index].rune;
 		if (rune != null)
 		{
 			rune.SetRuneColor(Defines.self.lineColor);
@@ -159,32 +159,48 @@ public class Lines : MonoBehaviour
 			for (int a = 0; a < rune.lines.Count; a++)
 			{
 				rune.lines[a].rune = null;
+
+				//go through all nodes used by this line
+			}
+
+			
+			//go through all lines in this rune
+			for (int i = 0; i < rune.lines.Count; i++)
+			{
+				rune.lines[i].rune = null;
+
+				//go through all nodes used by this line
+				for (int a = 0; a < rune.lines[i].points.Count; a++)
+				{
+					rune.lines[i].points[a].node.rune = null;
+					rune.lines[i].points[a].node.usedByRune = false;
+				}
 			}
 
 			rune.dead = true;
 		}
 
 		//Remove reference from any nodes
-		for (int a = 0; a < lines[i].points.Count; a++)
+		for (int a = 0; a < lines[index].points.Count; a++)
 		{
-			if (lines[i].points[a].node != null)
+			if (lines[index].points[a].node != null)
 			{
 				//Find this line in this node
-				for (int b = 0; b < lines[i].points[a].node.lines.Count; b++)
+				for (int b = 0; b < lines[index].points[a].node.lines.Count; b++)
 				{
-					if (lines[i].points[a].node.lines[b].uId == lines[i].uId)
+					if (lines[index].points[a].node.lines[b].uId == lines[index].uId)
 					{
-						lines[i].points[a].node.lines.RemoveAt(b);
+						lines[index].points[a].node.lines.RemoveAt(b);
 						break;
 					}
 				}
 			}
 		}
 
-		lines[i].dead = true;
-		for (int a = 0; a < lines[i].points.Count; a++)
+		lines[index].dead = true;
+		for (int a = 0; a < lines[index].points.Count; a++)
 		{
-			Destroy(lines[i].points[a].linePrefab);
+			Destroy(lines[index].points[a].linePrefab);
 		}
 	}
 

@@ -56,6 +56,7 @@ public class Nodes : MonoBehaviour
 		public Vector3 pos;
 		public Vector3 angles;
 		public Runes.Rune rune;
+		public bool usedByRune = false;
 		public List<Lines.Line> lines;
 		public SpecialNodes specialType = SpecialNodes.None;
 		public Manas.Mana mana;//The mana that is using this spot
@@ -189,7 +190,7 @@ public class Nodes : MonoBehaviour
 
 		//A1
 		result = CheckRune(connections, node, "A1");//A1
-		
+
 		//A2
 		if (result == null)
 		{
@@ -203,10 +204,10 @@ public class Nodes : MonoBehaviour
 				connections[i].y2 = resetY2[i];
 				connections[i].z2 = -resetX2[i];
 			}
-			
+
 			result = CheckRune(connections, node, "A2");
 		}
-		
+
 		//A3
 		if (result == null)
 		{
@@ -222,7 +223,7 @@ public class Nodes : MonoBehaviour
 			}
 			result = CheckRune(connections, node, "A3");
 		}
-		
+
 		//A4
 		if (result == null)
 		{
@@ -238,7 +239,7 @@ public class Nodes : MonoBehaviour
 			}
 			result = CheckRune(connections, node, "A4");
 		}
-		
+
 		//B1
 		if (result == null)
 		{
@@ -254,7 +255,7 @@ public class Nodes : MonoBehaviour
 			}
 			result = CheckRune(connections, node, "B1");
 		}
-		
+
 		//B2
 		if (result == null)
 		{
@@ -270,7 +271,7 @@ public class Nodes : MonoBehaviour
 			}
 			result = CheckRune(connections, node, "B2");
 		}
-		
+
 		//B3
 		if (result == null)
 		{
@@ -286,7 +287,7 @@ public class Nodes : MonoBehaviour
 			}
 			result = CheckRune(connections, node, "B3");
 		}
-		
+
 		//B4
 		if (result == null)
 		{
@@ -302,7 +303,7 @@ public class Nodes : MonoBehaviour
 			}
 			result = CheckRune(connections, node, "B4");
 		}
-		
+
 
 
 		return result;
@@ -392,9 +393,11 @@ public class Nodes : MonoBehaviour
 		for (int a = 0; a < result.Count; a++)
 		{
 			//If for whatever reason, any of the results don't have a node, then fail.
-			if (result[a].n1 == null || result[a].n2 == null) {
-				s += "Failed because n1 or n2 was null"; 
-				Debug.Log(s);return null; }
+			if (result[a].n1 == null || result[a].n2 == null)
+			{
+				s += "Failed because n1 or n2 was null";
+				Debug.Log(s); return null;
+			}
 
 			//Check that this connection exists as a line
 			for (int i = 0; i < result[a].n1.lines.Count; i++)
@@ -409,10 +412,23 @@ public class Nodes : MonoBehaviour
 					}
 				}
 			}
-			if (result[a].line == null) {
-				s += "Failed because a required line didn't exist"; 
-				Debug.Log(s);return null; }//Couldn't find a line that connects these 2 nodes
+			if (result[a].line == null)
+			{
+				s += "Failed because a required line didn't exist";
+				Debug.Log(s); return null;
+			}//Couldn't find a line that connects these 2 nodes
 		}
+
+
+		//Check none of the lines or nodes are used in another rune
+		//go through all lines in this rune
+		for (int i = 0; i < result.Count; i++)
+		{
+			if (result[i].n1.usedByRune) { s += "Failed because n1 was used in another rune"; Debug.Log(s); return null; }
+			if (result[i].n2.usedByRune) { s += "Failed because n2 was used in another rune"; Debug.Log(s); return null; }
+			if (result[i].line.rune != null) { s += "Failed because line was used in another rune"; Debug.Log(s); return null; }
+		}
+
 
 
 		Debug.Log(s);
