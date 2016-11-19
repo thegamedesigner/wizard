@@ -27,13 +27,9 @@ public class Manas : MonoBehaviour
 	public class Mana
 	{
 		public GameObject go;
-		public Vector3 nodePos;
-		public int nodeIndex = -1;
 		public Nodes.Node node;
-		public float timeSet;
-		public float dir;
-		public float momentum;//Number of grid points before stopping.
 		public ManaTypes type;
+		public int uId = -1;
 
 	}
 
@@ -44,26 +40,19 @@ public class Manas : MonoBehaviour
 		manas.Add(mana);
 	}
 
-	public static void CreateMana(Vector3 pos, float dir, float momentumInGridPoints, ManaTypes type)
+	public static void CreateMana(Nodes.Node n, ManaTypes type)
 	{
 		GameObject go = Instantiate(Defines.self.manaPrefab);
-		go.transform.position = pos;
+		go.transform.position = n.pos;
 		go.transform.localEulerAngles = new Vector3(0, 0, 0);
 
 		Mana m = new Mana();
 		m.go = go;
-		m.dir = dir;
 		m.type = type;
-		m.momentum = momentumInGridPoints / xa.gridScale;//Turns momentum of 3 grid points into whatever that distance actually is in grid points, based on gridScale.
-
-		//Reserve the node that this mana has been created on, for this mana.
-		m.go.transform.SetAngY(m.dir);//Set direction
-		m.nodePos = m.go.transform.position;//Careful to not create a mana if the node space isn't free.
-		m.go.transform.Translate(-(1 / xa.gridScale), 0, 0);//Move backwards the correct amount
-
-		Nodes.Node node = Nodes.FindNearestNode(m.nodePos);
-		node.mana = m;
-		m.node = node;
+		xa.uIds ++;
+		m.uId = xa.uIds;
+		n.mana = m;
+		m.node = n;
 
 		manas.Add(m);
 	}
@@ -83,6 +72,7 @@ public class Manas : MonoBehaviour
 
 		for (int i = 0; i < manas.Count; i++)
 		{
+			/*
 			//draw a debug line
 			Mana m = manas[i];
 
@@ -96,55 +86,8 @@ public class Manas : MonoBehaviour
 
 					m.go.transform.SetAngY(m.dir);//Set direction
 
-					/*
-					//Am I about to switch to the next node?
-					//Am I on my node pos? Then check if the next one is free
-					Vector3 startPos = m.go.transform.position;
-					m.go.transform.Translate(speed, 0, 0);
-					Vector3 projectedPos = m.go.transform.position;
-					m.go.transform.position = startPos;
-					bool dontMove = false;
-
-					if (m.nodePos == m.go.transform.position)
-					//if (Vector3.Distance(manas[i].nodePos, projectedPos) > ((1 / Lines.gridScale) * 0.5f))
-					{
-						//Then this would move across the line and be at the next node.
-						//Is it free?
-						m.go.transform.position = m.nodePos;//Just to make sure, snap to that pos
-						m.go.transform.Translate((1 / xa.gridScale), 0, 0);
-						Vector3 nextNodePos = m.go.transform.position;
-						m.go.transform.position = startPos;
-
-						int nextNodeIndex = Nodes.GetIndexForNodePos(nextNodePos);
-						if (Nodes.nodes[nextNodeIndex].mana == null)
-						{
-							//Then switch to this node. Don't stop moving.
-							Nodes.nodes[m.nodeIndex].mana = null;//Unreserve from my last node
-							Nodes.nodes[nextNodeIndex].mana = m;//Reserve with my new node
-							m.node = Nodes.nodes[nextNodeIndex];
-							m.nodeIndex = nextNodeIndex;
-							m.nodePos = Nodes.nodes[nextNodeIndex].pos;
-						}
-						else
-						{
-							//Dont move
-							dontMove = true;
-						}
-					}
-
-					if (!dontMove)
-					{
-						m.momentum -= speed;
-						m.go.transform.Translate(speed, 0, 0);
-					}
-					*/
 				}
-			}
+			}*/
 		}
-
-
-
-
-
 	}
 }

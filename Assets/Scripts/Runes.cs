@@ -16,13 +16,22 @@ public class Runes : MonoBehaviour
 		End
 	}
 
+	public enum NodeTags //Tags to put on a Rune's nodes, so it can tell which node is which inside itself.
+	{
+		None,
+		CenterNode,
+		ShouldBe_ManaFountain,
+		SpawnPointNode,
+		End
+	}
+
 	public class Rune
 	{
 		public RuneTypes type = RuneTypes.None;
 		public List<Lines.Line> lines;//Lines that are in this rune
+		public List<Nodes.Node> nodes;//Nodes that are in this rune
 		public bool active = false;
 		public bool setColorBefore = false;
-		public Vector3[] positionsOfInterest;
 		public float timeSet = 0;
 		public float delay = 0;
 		public Manas.ManaTypes manaType;
@@ -35,16 +44,18 @@ public class Runes : MonoBehaviour
 				case RuneTypes.RuneOfHarvest:
 					if (Time.timeSinceLevelLoad >= (timeSet + 5))
 					{
-						Debug.Log("Spawned! Time: " + Time.timeSinceLevelLoad + ", TimeSet: " + timeSet + ", delay: 5");
 						timeSet = Time.timeSinceLevelLoad;
-
 						/*
-						nodeIndex = Nodes.GetIndexForNodePos(positionsOfInterest[2]);
-						if (nodeIndex != -1)
+						Debug.Log("Spawned! Time: " + Time.timeSinceLevelLoad + ", TimeSet: " + timeSet + ", delay: 5");
+				
+
+						
+						Nodes.Node n = Nodes.FindNearestNode(positionsOfInterest[0]);
+						if (n != null)
 						{
-							if (Nodes.nodes[nodeIndex].mana == null)//If this node is clear, create mana on it.
+							if (n.mana == null)//If this node is clear, create mana on it.
 							{
-								Manas.CreateMana(positionsOfInterest[2], 90, 3, manaType);
+								Manas.CreateMana(n, manaType);
 							}
 						}*/
 
@@ -99,7 +110,7 @@ public class Runes : MonoBehaviour
 
 				//Crowprint
 				LookForCrowprint(Nodes.nodes[n]);
-				
+
 				LookForRuneOfHarvest(Nodes.nodes[n]);
 			}
 		}
@@ -149,11 +160,15 @@ public class Runes : MonoBehaviour
 			runes.Add(rune);
 		}
 	}
-	
+
 	public static void LookForRuneOfHarvest(Nodes.Node node)
 	{
 		//Debug.Log("Looking for Rune of Harvest, Node uId: " + node.uId);
 		List<Nodes.Connection> connections = new List<Nodes.Connection>();
+
+		connections.Add(Nodes.Tag(0, 0, 0, NodeTags.CenterNode));
+		connections.Add(Nodes.Tag(0, 0, 1, NodeTags.ShouldBe_ManaFountain));
+		connections.Add(Nodes.Tag(0, 0, 2, NodeTags.SpawnPointNode));
 
 		connections.Add(Nodes.Con(-1, 0, 1, 0, 0, 0));
 		connections.Add(Nodes.Con(1, 0, 1, 0, 0, 0));
@@ -162,7 +177,6 @@ public class Runes : MonoBehaviour
 		connections.Add(Nodes.Con(1, 0, 1, 0, 0, 2));
 		connections.Add(Nodes.Con(0, 0, 2, 0, 0, 0));
 
-		
 		List<Nodes.Connection> result = Nodes.CheckRuneMulti(connections, node);
 
 		if (result != null && result.Count > 0)
@@ -171,11 +185,53 @@ public class Runes : MonoBehaviour
 
 			Rune rune = new Rune();
 			rune.lines = new List<Lines.Line>();
+			rune.nodes = new List<Nodes.Node>();
 			rune.type = RuneTypes.RuneOfHarvest;
 
-			for (int i = 0; i < result.Count; i++)
+			for (int i = 0; i < result.Count; i++)//add all the lines to rune.lines
 			{
+				if (result[i].tag != NodeTags.None) { continue; }//Skip it, it's a tagged node entry
 				rune.lines.Add(result[i].line);
+			}
+			/*
+			//Print result
+			string s = "Result printout: \n";
+			for (int i = 0; i < result.Count; i++)//Add all the nodes to rune.nodes
+			{
+				s += "\n" + i;
+				s += ", x: " + result[i].x;
+				s += ", y: " + result[i].y;
+				s += ", z: " + result[i].z;
+				s += ", x2: " + result[i].x2;
+				s += ", y2: " + result[i].y2;
+				s += ", z2: " + result[i].z2;
+				s += ", n1: " + (result[i].n1 != null);
+				s += ", n2: " + (result[i].n2 != null);
+				s += ", line: " + (result[i].line != null);
+				s += ", tag: " + result[i].tag;
+			}
+			Debug.Log(s);
+			*/
+			for (int i = 0; i < result.Count; i++)//Add all the nodes to rune.nodes
+			{
+				bool doubles = false;
+				if (result[i].n1 != null)
+				{
+					for (int a = 0; a < rune.nodes.Count; a++)
+					{
+						if (rune.nodes[a].uId == result[i].n1.uId) { doubles = true; }
+					}
+					if (!doubles) { rune.nodes.Add(result[i].n1); }
+				}
+				if (result[i].n2 != null)
+				{
+					doubles = false;
+					for (int a = 0; a < rune.nodes.Count; a++)
+					{
+						if (rune.nodes[a].uId == result[i].n2.uId) { doubles = true; }
+					}
+					if (!doubles) { rune.nodes.Add(result[i].n2); }
+				}
 			}
 
 			//go through all lines in this rune
@@ -190,7 +246,7 @@ public class Runes : MonoBehaviour
 					rune.lines[i].points[a].node.usedByRune = true;
 				}
 			}
-
+			rune.delay = 2;
 			CheckRuneRequirements(rune);
 			runes.Add(rune);
 		}
@@ -369,17 +425,18 @@ public class Runes : MonoBehaviour
 				break;
 			case RuneTypes.RuneOfHarvest:
 				//Requires that there is a mana fountain inside it
-				/*
-				int index = Nodes.GetIndexForNodePos(r.positionsOfInterest[0]);
-				if (index != -1 && Nodes.nodes[index].specialType == Nodes.SpecialNodes.ManaFountain)
-				{
-					r.active = true;
-				}
-				else
-				{
-					r.active = false;
-				}*/
+
+				//Find a node in this rune tagged as ShouldBe_ManaFountain
 				r.active = false;
+				for (int i = 0; i < r.nodes.Count; i++)
+				{
+					if (r.nodes[i].tag == NodeTags.ShouldBe_ManaFountain && r.nodes[i].specialType == Nodes.SpecialNodes.ManaFountain)
+					{
+						//Debug.Log("HERE");
+						r.active = true;
+						break;
+					}
+				}
 				break;
 			case RuneTypes.RuneOfMomentum:
 				r.active = true;

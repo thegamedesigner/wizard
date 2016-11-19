@@ -159,8 +159,6 @@ public class Lines : MonoBehaviour
 			for (int a = 0; a < rune.lines.Count; a++)
 			{
 				rune.lines[a].rune = null;
-
-				//go through all nodes used by this line
 			}
 
 			
@@ -168,11 +166,11 @@ public class Lines : MonoBehaviour
 			for (int i = 0; i < rune.lines.Count; i++)
 			{
 				rune.lines[i].rune = null;
-
 				//go through all nodes used by this line
 				for (int a = 0; a < rune.lines[i].points.Count; a++)
 				{
 					rune.lines[i].points[a].node.rune = null;
+					rune.lines[i].points[a].node.tag = Runes.NodeTags.None;
 					rune.lines[i].points[a].node.usedByRune = false;
 				}
 			}
@@ -286,6 +284,11 @@ public class Lines : MonoBehaviour
 			{
 				s += Runes.runes[i].lines[a].uId + ", ";
 			}
+			s += "\n - Nodes: ";
+			for (int a = 0; a < Runes.runes[i].nodes.Count; a++)
+			{
+				s += Runes.runes[i].nodes[a].uId + ", ";
+			}
 			s += "\n";
 		}
 		
@@ -295,12 +298,16 @@ public class Lines : MonoBehaviour
 			s += "Grid: " + Nodes.grids[i].uId + ", Pos: " + Nodes.grids[i].go.transform.position;
 			s += "\n";
 		}
-		/*
+		
 		s += "\n\nNodes:\n";
 		for (int i = 0; i < Nodes.nodes.Count; i++)
 		{
-			s += "Node: " + Nodes.nodes[i].pos;
+			if(Nodes.nodes[i].tag == Runes.NodeTags.None && 
+			Nodes.nodes[i].specialType == Nodes.SpecialNodes.None){continue;}
+			s += "Node: " + Nodes.nodes[i].uId;
+			s += ", Pos: " + Nodes.nodes[i].pos;
 			s += ", Mana: " + (Nodes.nodes[i].mana != null);
+			s += ", Tag: " + Nodes.nodes[i].tag;
 			s += ", Special: " + Nodes.nodes[i].specialType;
 			if (Nodes.nodes[i].lines.Count > 0)
 			{
@@ -312,7 +319,7 @@ public class Lines : MonoBehaviour
 			}
 			s += "\n";
 		}
-		*/
+		
 
 
 		Defines.self.debugText.text = s;
@@ -327,7 +334,7 @@ public class Lines : MonoBehaviour
 		s += "\n\nMana:\n";
 		for (int i = 0; i < Manas.manas.Count; i++)
 		{
-			s += "Mana: " + Manas.manas[i].nodePos + ", dir: " + Manas.manas[i].dir + ", Momentum: " + Manas.manas[i].momentum;
+			s += "Mana: " + Manas.manas[i].uId;
 
 			s += "\n";
 		}

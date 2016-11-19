@@ -29,6 +29,7 @@ public class Nodes : MonoBehaviour
 
 		public Node n1;
 		public Node n2;
+		public Runes.NodeTags tag = Runes.NodeTags.None;
 
 		public Lines.Line line;//The line that connects these 2 nodes
 	}
@@ -63,6 +64,7 @@ public class Nodes : MonoBehaviour
 		public List<Node> connections;
 		public GridQuad grid;
 		public List<RelCon> relCons = new List<RelCon>();//
+		public Runes.NodeTags tag = Runes.NodeTags.None;
 	}
 
 	public static void InitNodes()
@@ -154,6 +156,16 @@ public class Nodes : MonoBehaviour
 		}
 	}
 
+	public static Connection Tag(int x, int y, int z, Runes.NodeTags tag)
+	{
+		Connection c = new Connection();
+		c.x = x;
+		c.y = y;
+		c.z = z;
+		c.tag = tag;
+		return c;
+	}
+
 	public static Connection Con(int x, int y, int z, int x2, int y2, int z2)
 	{
 		Connection c = new Connection();
@@ -168,7 +180,6 @@ public class Nodes : MonoBehaviour
 
 	public static List<Connection> CheckRuneMulti(List<Connection> connections, Node node)
 	{
-		Debug.Log("Checking RuneMulti");
 		List<Connection> result = null;
 
 		int[] resetX = new int[connections.Count];
@@ -189,7 +200,7 @@ public class Nodes : MonoBehaviour
 		}
 
 		//A1
-		result = CheckRune(connections, node, "A1");//A1
+		result = CheckRune(connections, node);//A1
 
 		//A2
 		if (result == null)
@@ -205,7 +216,7 @@ public class Nodes : MonoBehaviour
 				connections[i].z2 = -resetX2[i];
 			}
 
-			result = CheckRune(connections, node, "A2");
+			result = CheckRune(connections, node);
 		}
 
 		//A3
@@ -221,7 +232,7 @@ public class Nodes : MonoBehaviour
 				connections[i].y2 = resetY2[i];
 				connections[i].z2 = -resetZ2[i];
 			}
-			result = CheckRune(connections, node, "A3");
+			result = CheckRune(connections, node);
 		}
 
 		//A4
@@ -237,7 +248,7 @@ public class Nodes : MonoBehaviour
 				connections[i].y2 = resetY2[i];
 				connections[i].z2 = resetX2[i];
 			}
-			result = CheckRune(connections, node, "A4");
+			result = CheckRune(connections, node);
 		}
 
 		//B1
@@ -253,7 +264,7 @@ public class Nodes : MonoBehaviour
 				connections[i].y2 = resetY2[i];
 				connections[i].z2 = resetZ2[i];
 			}
-			result = CheckRune(connections, node, "B1");
+			result = CheckRune(connections, node);
 		}
 
 		//B2
@@ -269,7 +280,7 @@ public class Nodes : MonoBehaviour
 				connections[i].y2 = resetY2[i];
 				connections[i].z2 = resetX2[i];
 			}
-			result = CheckRune(connections, node, "B2");
+			result = CheckRune(connections, node);
 		}
 
 		//B3
@@ -285,7 +296,7 @@ public class Nodes : MonoBehaviour
 				connections[i].y2 = resetY2[i];
 				connections[i].z2 = -resetZ2[i];
 			}
-			result = CheckRune(connections, node, "B3");
+			result = CheckRune(connections, node);
 		}
 
 		//B4
@@ -301,7 +312,7 @@ public class Nodes : MonoBehaviour
 				connections[i].y2 = resetY2[i];
 				connections[i].z2 = -resetX2[i];
 			}
-			result = CheckRune(connections, node, "B4");
+			result = CheckRune(connections, node);
 		}
 
 
@@ -309,16 +320,15 @@ public class Nodes : MonoBehaviour
 		return result;
 	}
 
-	public static List<Connection> CheckRune(List<Connection> connections, Node node, string label)
+	public static List<Connection> CheckRune(List<Connection> connections, Node node)
 	{
 		List<Connection> result = new List<Connection>();
-
-		string s = "Print CheckRune: " + label + "\n";
 
 		//Check that all connections on list are matched to RelCons that this node has.
 		//(Can't have a node that larger then it's center node's connections)
 		for (int a = 0; a < connections.Count; a++)
 		{
+			if (connections[a].tag != Runes.NodeTags.None) { continue; }//Skip connections that are just tags
 			bool found = false;
 			//Loop through all of this node's connections
 			for (int b = 0; b < node.relCons.Count; b++)
@@ -344,8 +354,8 @@ public class Nodes : MonoBehaviour
 			if (!found)
 			{
 				//Failed. Return nothing.
-				s += "Failed because I didn't find one of the required relCon nodes. " + connections[a].x + ", " + connections[a].y + ", " + connections[a].z + ", Vec2: " + connections[a].x2 + ", " + connections[a].y2 + ", " + connections[a].z2;
-				Debug.Log(s);
+				//s += "Failed because I didn't find one of the required relCon nodes. " + connections[a].x + ", " + connections[a].y + ", " + connections[a].z + ", Vec2: " + connections[a].x2 + ", " + connections[a].y2 + ", " + connections[a].z2;
+				//Debug.Log(s);
 				return null;
 			}
 		}
@@ -395,8 +405,9 @@ public class Nodes : MonoBehaviour
 			//If for whatever reason, any of the results don't have a node, then fail.
 			if (result[a].n1 == null || result[a].n2 == null)
 			{
-				s += "Failed because n1 or n2 was null";
-				Debug.Log(s); return null;
+				//s += "Failed because n1 or n2 was null";
+				//Debug.Log(s);
+				return null;
 			}
 
 			//Check that this connection exists as a line
@@ -414,8 +425,9 @@ public class Nodes : MonoBehaviour
 			}
 			if (result[a].line == null)
 			{
-				s += "Failed because a required line didn't exist";
-				Debug.Log(s); return null;
+				//s += "Failed because a required line didn't exist";
+				//Debug.Log(s);
+				return null;
 			}//Couldn't find a line that connects these 2 nodes
 		}
 
@@ -424,14 +436,80 @@ public class Nodes : MonoBehaviour
 		//go through all lines in this rune
 		for (int i = 0; i < result.Count; i++)
 		{
-			if (result[i].n1.usedByRune) { s += "Failed because n1 was used in another rune"; Debug.Log(s); return null; }
-			if (result[i].n2.usedByRune) { s += "Failed because n2 was used in another rune"; Debug.Log(s); return null; }
-			if (result[i].line.rune != null) { s += "Failed because line was used in another rune"; Debug.Log(s); return null; }
+			if (result[i].n1.usedByRune) { /*s += "Failed because n1 was used in another rune"; Debug.Log(s); */return null; }
+			if (result[i].n2.usedByRune) { /*s += "Failed because n2 was used in another rune"; Debug.Log(s);*/ return null; }
+			if (result[i].line.rune != null) {/* s += "Failed because line was used in another rune"; Debug.Log(s);*/ return null; }
+		}
+		/*
+		//Print result
+		string s = "connections printout: \n";
+		for (int i = 0; i < connections.Count; i++)//Add all the nodes to rune.nodes
+		{
+			s += "\n" + i;
+			s += ", x: " + connections[i].x;
+			s += ", y: " + connections[i].y;
+			s += ", z: " + connections[i].z;
+			s += ", x2: " + connections[i].x2;
+			s += ", y2: " + connections[i].y2;
+			s += ", z2: " + connections[i].z2;
+			s += ", n1: " + (connections[i].n1 != null);
+			s += ", n2: " + (connections[i].n2 != null);
+			s += ", line: " + (connections[i].line != null);
+			s += ", tag: " + connections[i].tag;
+		}
+		Debug.Log(s);
+			*/
+		//Loop through the connections and set the node's tags
+		for (int a = 0; a < connections.Count; a++)
+		{
+			if (connections[a].tag == Runes.NodeTags.None) { continue; }//This isn't a tagging
+
+			//Ok, this is a tagged node.
+
+			//Loop through all of this node's relCon connections
+			for (int b = 0; b < node.relCons.Count; b++)
+			{
+				Node foundNode = null;
+				if (connections[a].x == 0 &&
+					connections[a].y == 0 &&
+					connections[a].z == 0)
+				{
+					node.tag = connections[a].tag;
+					foundNode = node;
+				}
+				else if (connections[a].x == node.relCons[b].x &&
+					connections[a].y == node.relCons[b].y &&
+					connections[a].z == node.relCons[b].z)
+				{
+					node.relCons[b].node.tag = connections[a].tag;
+					foundNode = node.relCons[b].node;
+				}
+				
+				//Alright. I've tagged this node. Now is it on the result list?
+				if (foundNode != null)
+				{
+					//Debug.Log("FoundNode: " + foundNode.uId + ", " + foundNode.tag);
+					//Check if this node is already on the result list
+					bool foundOnList = false;
+					for(int c = 0;c < result.Count;c ++)
+					{
+						if(result[c].n1 != null) { if(result[c].n1.uId == foundNode.uId) {foundOnList = true;break; } }
+						if(result[c].n2 != null) { if(result[c].n2.uId == foundNode.uId) {foundOnList = true;break;} }
+					}
+					if(!foundOnList)
+					{
+						//Isn't a line-connected node, so we have to add it manually to the list
+						Connection c = new Connection();
+						c.n1 = foundNode;
+						c.tag = foundNode.tag;//Just to make this entry have a unique thing so I can check for it
+						result.Add(c);//add it to the list
+					}
+					break;//Stop looking, we found one
+				}
+			}
 		}
 
-
-
-		Debug.Log(s);
+		//Debug.Log(s);
 		return result;
 	}
 

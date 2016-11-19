@@ -12,6 +12,7 @@ public class Gun : MonoBehaviour
 	int lineId = -1;
 	int lastLineId = -1;
 	Vector3 startPos;
+	int startNodeId = -1;
 
 	void Start()
 	{
@@ -28,6 +29,7 @@ public class Gun : MonoBehaviour
 
 	void CheckDrawLine()
 	{
+		bool wipe = false;
 		if (Input.GetMouseButtonDown(0))
 		{
 			//Started drawing!
@@ -45,6 +47,7 @@ public class Gun : MonoBehaviour
 				{
 					lineId = Lines.RegisterNewLine();
 					startPos = n.pos;
+					startNodeId = n.uId;
 					Lines.AddPoint(n, lineId);
 				}
 				else
@@ -65,19 +68,34 @@ public class Gun : MonoBehaviour
 				if (Physics.Raycast(ray, out hit, 1000, mask))
 				{
 					Nodes.Node n = Nodes.FindNearestNode(hit.point);
-
-					//check this is a valid pos
-					if (Nodes.CheckValidNode(n))
+					if (n.uId == startNodeId)
 					{
-						Lines.AddPoint(n, lineId);
-						//Debug.DrawLine(startPos, point, Color.red, 100);
-						//Debug.DrawLine(ray.origin, hit.point, Color.blue, 100);
-						//Debug.DrawLine(startPos, hit.point, Color.blue, 100);
+						wipe = true;
+					}
+					else
+					{
+						//check this is a valid pos
+						if (Nodes.CheckValidNode(n))
+						{
+							Lines.AddPoint(n, lineId);
+						}
+						else
+						{
+							wipe = true;
+						}
 					}
 				}
 
+				if(wipe)
+				{
+					//kill the line
+					Lines.DeleteLine(lineId);
+				}
+				else
+				{
+					lastLineId = lineId;
+				}
 				//Released!
-				lastLineId = lineId;
 				drawing = false;
 				lineId = -1;
 			}
