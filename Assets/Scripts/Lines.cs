@@ -43,9 +43,10 @@ public class Lines : MonoBehaviour
 		return pos;
 	}
 	*/
-	public static Vector3 AddPoint(Nodes.Node n1, int uId)
+	public static void AddPoint(Nodes.Node n1, int uId)
 	{
 		int i = GetLineForId(uId);
+		if(i == -1) {return; }
 
 		Point point = new Point();
 		point.pos = n1.pos;
@@ -72,7 +73,7 @@ public class Lines : MonoBehaviour
 
 		lines[i].points.Add(point);
 
-		return n1.pos;
+		return;
 	}
 
 	public static GameObject CreateLinePrefab(Nodes.Node n1, Nodes.Node n2, Color c1)
@@ -259,7 +260,7 @@ public class Lines : MonoBehaviour
 	public static void PrintInfo()
 	{
 		string s = "";
-
+		/*
 		s += "Lines:\n";
 		for (int i = 0; i < lines.Count; i++)
 		{
@@ -274,7 +275,7 @@ public class Lines : MonoBehaviour
 			}
 			s += "\n";
 		}
-
+		*/
 		s += "\n\nRunes:\n";
 		for (int i = 0; i < Runes.runes.Count; i++)
 		{
@@ -291,14 +292,14 @@ public class Lines : MonoBehaviour
 			}
 			s += "\n";
 		}
-		
+		/*
 		s += "\n\nGrids:\n";
 		for (int i = 0; i < Nodes.grids.Count; i++)
 		{
 			s += "Grid: " + Nodes.grids[i].uId + ", Pos: " + Nodes.grids[i].go.transform.position;
 			s += "\n";
 		}
-		
+		*/
 		s += "\n\nNodes:\n";
 		for (int i = 0; i < Nodes.nodes.Count; i++)
 		{
