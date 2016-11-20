@@ -32,11 +32,17 @@ public class Runes : MonoBehaviour
 		End
 	}
 
+	public class NodeAndTag
+	{
+		public Nodes.Node node = null;
+		public NodeTags tag = NodeTags.None;
+	}
+
 	public class Rune
 	{
 		public RuneTypes type = RuneTypes.None;
 		public List<Lines.Line> lines = new List<Lines.Line>();//Lines that are in this rune
-		public List<Nodes.Node> nodes = new List<Nodes.Node>();//Nodes that are in this rune
+		public List<NodeAndTag> nodes = new List<NodeAndTag>();//Nodes that are in this rune
 		public bool active = false;
 		public bool setColorBefore = false;
 		public float timeSet = 0;
@@ -57,7 +63,7 @@ public class Runes : MonoBehaviour
 		{
 			for (int i = 0; i < nodes.Count; i++)
 			{
-				if (nodes[i].tag == tag) { return nodes[i]; }
+				if (nodes[i].tag == tag) { return nodes[i].node; }
 			}
 			return null;
 		}
@@ -345,22 +351,36 @@ public class Runes : MonoBehaviour
 		for (int i = 0; i < result.Count; i++)//Add all the nodes to rune.nodes
 		{
 			bool doubles = false;
+			NodeAndTag nodeAndTag;
+
 			if (result[i].n1 != null)
 			{
 				for (int a = 0; a < rune.nodes.Count; a++)
 				{
-					if (rune.nodes[a].uId == result[i].n1.uId) { doubles = true; }
+					if (rune.nodes[a].node.uId == result[i].n1.uId) { doubles = true; }
 				}
-				if (!doubles) { rune.nodes.Add(result[i].n1); }
+				if (!doubles)
+				{
+					nodeAndTag = new NodeAndTag();
+					nodeAndTag.node = result[i].n1;
+					nodeAndTag.tag = nodeAndTag.node.tag;
+					rune.nodes.Add(nodeAndTag);
+				}
 			}
 			if (result[i].n2 != null)
 			{
 				doubles = false;
 				for (int a = 0; a < rune.nodes.Count; a++)
 				{
-					if (rune.nodes[a].uId == result[i].n2.uId) { doubles = true; }
+					if (rune.nodes[a].node.uId == result[i].n2.uId) { doubles = true; }
 				}
-				if (!doubles) { rune.nodes.Add(result[i].n2); }
+				if (!doubles)
+				{
+					nodeAndTag = new NodeAndTag();
+					nodeAndTag.node = result[i].n2;
+					nodeAndTag.tag = nodeAndTag.node.tag;
+					rune.nodes.Add(nodeAndTag);
+				}
 			}
 		}
 
@@ -396,7 +416,7 @@ public class Runes : MonoBehaviour
 				r.active = false;
 				for (int i = 0; i < r.nodes.Count; i++)
 				{
-					if (r.nodes[i].tag == NodeTags.ShouldBe_ManaFountain && r.nodes[i].specialType == Nodes.SpecialNodes.ManaFountain)
+					if (r.nodes[i].tag == NodeTags.ShouldBe_ManaFountain && r.nodes[i].node.specialType == Nodes.SpecialNodes.ManaFountain)
 					{
 						//Debug.Log("HERE");
 						r.active = true;
@@ -492,13 +512,16 @@ public class Runes : MonoBehaviour
 		if (nodeFrom.mana == null) { return; }
 		if (nodeTo.mana != null) { return; }
 
-		Manas.Mana mana = nodeFrom.mana;
+		if (Time.timeSinceLevelLoad >= (nodeFrom.mana.timeSet + 1))
+		{
+			Manas.Mana mana = nodeFrom.mana;
+			mana.timeSet = Time.timeSinceLevelLoad;
+			mana.go.transform.position = nodeTo.pos;
+			mana.node = nodeTo;
+			nodeFrom.mana = null;
+			nodeTo.mana = mana;
 
-		mana.go.transform.position = nodeTo.pos;
-		mana.node = nodeTo;
-		nodeFrom.mana = null;
-		nodeTo.mana = mana;
-
+		}
 	}
 
 }

@@ -64,7 +64,7 @@ public class Nodes : MonoBehaviour
 		public List<Node> connections;
 		public GridQuad grid;
 		public List<RelCon> relCons = new List<RelCon>();//
-		public Runes.NodeTags tag = Runes.NodeTags.None;
+		public Runes.NodeTags tag = Runes.NodeTags.None;//A temporary holding place for a tag when a rune is created. Can be overwritten. Look at Runes.Rune.NodeAndTag.tag for the permant storage of tags
 	}
 
 	public static void InitNodes()

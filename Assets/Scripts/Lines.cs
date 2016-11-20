@@ -288,7 +288,7 @@ public class Lines : MonoBehaviour
 			s += "\n - Nodes: ";
 			for (int a = 0; a < Runes.runes[i].nodes.Count; a++)
 			{
-				s += Runes.runes[i].nodes[a].uId + ", ";
+				s += Runes.runes[i].nodes[a].node.uId + ", ";
 			}
 			s += "\n";
 		}

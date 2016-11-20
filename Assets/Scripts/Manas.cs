@@ -30,6 +30,7 @@ public class Manas : MonoBehaviour
 		public Nodes.Node node;
 		public ManaTypes type;
 		public int uId = -1;
+		public float timeSet;
 
 	}
 
